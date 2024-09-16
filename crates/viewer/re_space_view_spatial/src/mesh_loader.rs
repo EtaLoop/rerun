@@ -27,7 +27,9 @@ impl LoadedMesh {
     ) -> anyhow::Result<Self> {
         // TODO(emilk): load CpuMesh in background thread.
         match mesh {
-            AnyMesh::Asset(asset3d) => Self::load_asset3d(name, asset3d, render_ctx),
+            AnyMesh::Asset { asset, texture_key } => {
+                Ok(Self::load_asset3d(name, asset, texture_key, render_ctx)?)
+            }
             AnyMesh::Mesh { mesh, texture_key } => {
                 Ok(Self::load_mesh3d(name, mesh, texture_key, render_ctx)?)
             }
@@ -37,10 +39,13 @@ impl LoadedMesh {
     pub fn load_asset3d_parts(
         name: String,
         media_type: &MediaType,
-        bytes: &[u8],
+        asset3d: &Asset3D,
         render_ctx: &RenderContext,
+        texture_key: u64,
     ) -> anyhow::Result<Self> {
         re_tracing::profile_function!();
+
+        let bytes = asset3d.blob.as_slice();
 
         let mesh_instances = match media_type.as_str() {
             MediaType::GLTF | MediaType::GLB => re_renderer::importer::gltf::load_gltf_from_buffer(
@@ -54,7 +59,9 @@ impl LoadedMesh {
                 ResourceLifeTime::LongLived,
                 render_ctx,
             )?,
-            MediaType::STL => re_renderer::importer::stl::load_stl_from_buffer(bytes, render_ctx)?,
+            MediaType::STL => {
+                re_renderer::importer::stl::load_stl_from_buffer(asset3d, render_ctx, texture_key)?
+            }
             _ => anyhow::bail!("{media_type} files are not supported"),
         };
 
@@ -70,15 +77,15 @@ impl LoadedMesh {
     fn load_asset3d(
         name: String,
         asset3d: &Asset3D,
+        texture_key: u64,
         render_ctx: &RenderContext,
     ) -> anyhow::Result<Self> {
         re_tracing::profile_function!();
 
-        let Asset3D { blob, media_type } = asset3d;
-
-        let media_type = MediaType::or_guess_from_data(media_type.clone(), blob.as_slice())
-            .ok_or_else(|| anyhow::anyhow!("couldn't guess media type"))?;
-        let slf = Self::load_asset3d_parts(name, &media_type, blob.as_slice(), render_ctx)?;
+        let media_type =
+            MediaType::or_guess_from_data(asset3d.media_type.clone(), asset3d.blob.as_slice())
+                .ok_or_else(|| anyhow::anyhow!("couldn't guess media type"))?;
+        let slf = Self::load_asset3d_parts(name, &media_type, asset3d, render_ctx, texture_key)?;
 
         Ok(slf)
     }
