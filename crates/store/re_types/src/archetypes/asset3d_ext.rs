@@ -1,6 +1,4 @@
-use crate::components::{self, MediaType};
-
-use crate::archetypes;
+use crate::components::MediaType;
 
 use super::Asset3D;
 
