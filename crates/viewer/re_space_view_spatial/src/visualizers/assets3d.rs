@@ -78,8 +78,6 @@ impl Asset3DVisualizer {
                             blob: data.blob.clone().into(),
                             media_type: data.media_type.clone().map(Into::into),
                             albedo_factor: data.albedo_factor.copied(),
-                            albedo_texture_buffer: data.albedo_buffer.clone(), // shallow clone,
-                            albedo_texture_format: data.albedo_format,
                         },
                         texture_key: re_log_types::hash::Hash64::hash(&key).hash64(),
                     },
