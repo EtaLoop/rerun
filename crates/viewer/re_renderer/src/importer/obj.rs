@@ -1,5 +1,6 @@
 use std::sync::Arc;
 
+use re_types::components::AlbedoFactor;
 use smallvec::smallvec;
 
 use crate::{
@@ -27,6 +28,7 @@ pub fn load_obj_from_buffer(
     buffer: &[u8],
     lifetime: ResourceLifeTime,
     ctx: &RenderContext,
+    albedo_factor: Option<AlbedoFactor>,
 ) -> Result<Vec<MeshInstance>, ObjImportError> {
     re_tracing::profile_function!();
 
@@ -102,7 +104,7 @@ pub fn load_obj_from_buffer(
                     label: "default material".into(),
                     index_range: 0..mesh.indices.len() as u32,
                     albedo: texture.clone(),
-                    albedo_factor: crate::Rgba::WHITE,
+                    albedo_factor: albedo_factor.map_or(crate::Rgba::WHITE, |c| c.0.into()),
                 }],
             };
 
