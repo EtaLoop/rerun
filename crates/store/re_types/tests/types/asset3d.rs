@@ -9,9 +9,6 @@ use re_types::{
 fn roundtrip() {
     const BYTES: &[u8] = &[1, 2, 3, 4, 5, 6];
 
-    let texture_format = re_types::components::ImageFormat::rgb8([2, 3]);
-    let texture_buffer = re_types::components::ImageBuffer::from(vec![0x42_u8; 2 * 3 * 3]);
-
     let expected = Asset3D {
         blob: Blob(BYTES.to_vec().into()),
         media_type: Some(MediaType(Utf8(MediaType::GLTF.into()))),
@@ -19,8 +16,7 @@ fn roundtrip() {
     };
 
     let arch = Asset3D::from_file_contents(BYTES.to_vec(), Some(MediaType::gltf()))
-        .with_albedo_factor(0xEE112233)
-        .with_albedo_texture(texture_format, texture_buffer);
+        .with_albedo_factor(0xEE112233);
     similar_asserts::assert_eq!(expected, arch);
 
     // let expected_extensions: HashMap<_, _> = [
