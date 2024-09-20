@@ -58,6 +58,7 @@ impl LoadedMesh {
                 bytes,
                 ResourceLifeTime::LongLived,
                 render_ctx,
+                asset3d.albedo_factor,
             )?,
             MediaType::STL => {
                 re_renderer::importer::stl::load_stl_from_buffer(asset3d, render_ctx, texture_key)?
