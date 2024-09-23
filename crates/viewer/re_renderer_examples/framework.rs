@@ -341,7 +341,8 @@ pub fn load_rerun_mesh(re_ctx: &RenderContext) -> Vec<re_renderer::renderer::Mes
         &obj_data,
         re_renderer::resource_managers::ResourceLifeTime::LongLived,
         re_ctx,
-        None,
+        &None,
+        &None,
     )
     .unwrap()
 }
