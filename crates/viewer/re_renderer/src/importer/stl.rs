@@ -2,8 +2,10 @@ use itertools::Itertools;
 use smallvec::smallvec;
 use tinystl::StlData;
 
-use crate::{mesh, renderer::MeshInstance, resource_managers::ResourceLifeTime, RenderContext};
-use re_types::archetypes::Asset3D;
+use crate::{
+    mesh, renderer::MeshInstance, resource_managers::ResourceLifeTime, RenderContext, Rgba32Unmul,
+};
+use re_types::{archetypes::Asset3D, components::Color};
 
 #[derive(thiserror::Error, Debug)]
 pub enum StlImportError {
@@ -27,6 +29,7 @@ pub fn load_stl_from_buffer(
 
     let Asset3D {
         blob,
+        vertex_colors,
         albedo_factor,
         ..
     } = asset3d;
@@ -42,6 +45,20 @@ pub fn load_stl_from_buffer(
     } = StlData::read_buffer(std::io::BufReader::new(cursor)).map_err(StlImportError::TinyStl)?;
 
     let num_vertices = triangles.len() * 3;
+    let vertex_positions: &[glam::Vec3] = bytemuck::cast_slice(&triangles);
+    let num_positions = vertex_positions.len();
+
+    let vertex_colors = if let Some(vertex_colors) = vertex_colors {
+        let vertex_colors_arr =
+            clamped_vec_or_empty_color(vertex_colors.as_slice(), vertex_positions.len());
+        re_tracing::profile_scope!("copy_colors");
+        vertex_colors_arr
+            .iter()
+            .map(|c| Rgba32Unmul::from_rgba_unmul_array(c.to_array()))
+            .collect()
+    } else {
+        vec![Rgba32Unmul::WHITE; num_positions]
+    };
 
     let material = mesh::Material {
         label: name.clone().into(),
@@ -68,8 +85,8 @@ pub fn load_stl_from_buffer(
             })
             .collect(),
 
-        // STL has neither colors nor texcoords.
-        vertex_colors: vec![crate::Rgba32Unmul::WHITE; num_vertices],
+        vertex_colors,
+        // STL has no texcoords.
         vertex_texcoords: vec![glam::Vec2::ZERO; num_vertices],
 
         materials: smallvec![material],
@@ -87,4 +104,28 @@ pub fn load_stl_from_buffer(
         mesh: Some(std::sync::Arc::new(mesh)),
         ..Default::default()
     }])
+}
+
+pub fn clamped_vec_or_empty_color(values: &[Color], clamped_len: usize) -> Vec<Color> {
+    if values.len() == clamped_len {
+        // Happy path
+        values.to_vec() // TODO(emilk): return a slice reference instead, in a `Cow` or similar
+    } else if let Some(last) = values.last() {
+        if values.len() == 1 {
+            // Commo happy path
+            return vec![*last; clamped_len];
+        } else if values.len() < clamped_len {
+            // Clamp
+            let mut vec = Vec::with_capacity(clamped_len);
+            vec.extend(values.iter());
+            vec.extend(std::iter::repeat(last).take(clamped_len - values.len()));
+            vec
+        } else {
+            // Trim
+            values.iter().take(clamped_len).copied().collect()
+        }
+    } else {
+        // Empty input
+        Vec::new()
+    }
 }
