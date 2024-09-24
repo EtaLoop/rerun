@@ -3482,19 +3482,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "mp4"
-version = "0.14.0"
-source = "git+https://github.com/rerun-io/mp4?rev=b019fcf3ac8e1befded54728686997cc168117c8#b019fcf3ac8e1befded54728686997cc168117c8"
-dependencies = [
- "byteorder",
- "bytes",
- "num-rational",
- "serde",
- "serde_json",
- "thiserror",
-]
-
-[[package]]
 name = "multimap"
 version = "0.10.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -4944,6 +4931,7 @@ dependencies = [
  "ahash",
  "anyhow",
  "image",
+ "notify",
  "once_cell",
  "parking_lot",
  "rayon",
@@ -4957,6 +4945,7 @@ dependencies = [
  "re_smart_channel",
  "re_tracing",
  "re_types",
+ "tempfile",
  "thiserror",
  "walkdir",
 ]
@@ -5003,6 +4992,7 @@ dependencies = [
  "re_types_blueprint",
  "re_types_core",
  "re_ui",
+ "re_video",
  "re_viewer_context",
  "unindent",
 ]
@@ -5237,6 +5227,20 @@ dependencies = [
  "sysinfo",
  "wasm-bindgen",
  "web-time",
+]
+
+[[package]]
+name = "re_mp4"
+version = "0.1.0"
+source = "git+https://github.com/rerun-io/re_mp4?rev=3236c76f9228cf6ab0b2bfb1b8f9ffcde975ea05#3236c76f9228cf6ab0b2bfb1b8f9ffcde975ea05"
+dependencies = [
+ "byteorder",
+ "bytes",
+ "log",
+ "num-rational",
+ "serde",
+ "serde_json",
+ "thiserror",
 ]
 
 [[package]]
@@ -5812,8 +5816,7 @@ name = "re_video"
 version = "0.19.0-alpha.1+dev"
 dependencies = [
  "itertools 0.13.0",
- "mp4",
- "ordered-float",
+ "re_mp4",
  "thiserror",
 ]
 

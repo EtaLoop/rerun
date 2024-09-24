@@ -77,8 +77,6 @@ impl MeshCache {
 }
 
 impl Cache for MeshCache {
-    fn begin_frame(&mut self) {}
-
     fn purge_memory(&mut self) {
         self.0.clear();
     }
