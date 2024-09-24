@@ -2,21 +2,22 @@ use std::sync::Arc;
 
 use re_log_types::{hash::Hash64, EntityPath};
 use re_renderer::{
+    external::re_video::VideoLoadError,
     renderer::{
         ColormappedTexture, RectangleOptions, TextureFilterMag, TextureFilterMin, TexturedRect,
     },
     resource_managers::Texture2DCreationDesc,
-    video::{FrameDecodingResult, Video, VideoError},
+    video::{FrameDecodingResult, Video},
 };
 use re_types::{
     archetypes::{AssetVideo, VideoFrameReference},
-    components::{Blob, EntityPath as EntityPathReferenceComponent, MediaType, VideoTimestamp},
-    datatypes::VideoTimeMode,
+    components::{Blob, MediaType, VideoTimestamp},
     Archetype, Loggable as _,
 };
 use re_viewer_context::{
-    ApplicableEntities, IdentifiedViewSystem, SpaceViewClass as _, SpaceViewSystemExecutionError,
-    VideoCache, ViewContext, ViewContextCollection, ViewQuery, ViewerContext, VisualizableEntities,
+    ApplicableEntities, IdentifiedViewSystem, SpaceViewClass as _, SpaceViewId,
+    SpaceViewSystemExecutionError, TypedComponentFallbackProvider, VideoCache, ViewContext,
+    ViewContextCollection, ViewQuery, ViewerContext, VisualizableEntities,
     VisualizableFilterContext, VisualizerQueryInfo, VisualizerSystem,
 };
 
@@ -93,7 +94,7 @@ impl VisualizerSystem for VideoFrameReferenceVisualizer {
                     return Ok(());
                 };
                 let all_video_references =
-                    results.iter_as(timeline, EntityPathReferenceComponent::name());
+                    results.iter_as(timeline, re_types::components::EntityPath::name());
 
                 for (_index, video_timestamps, video_references) in re_query::range_zip_1x1(
                     entity_iterator::iter_component(
@@ -114,6 +115,7 @@ impl VisualizerSystem for VideoFrameReferenceVisualizer {
                         video_timestamp,
                         video_references,
                         entity_path,
+                        view_query.space_view_id,
                     );
                 }
 
@@ -148,15 +150,20 @@ impl VideoFrameReferenceVisualizer {
         video_timestamp: &VideoTimestamp,
         video_references: Option<Vec<re_types::ArrowString>>,
         entity_path: &EntityPath,
+        view_id: SpaceViewId,
     ) {
         let Some(render_ctx) = ctx.viewer_ctx.render_ctx else {
             return;
         };
 
+        let decode_stream_id = re_renderer::video::VideoDecodingStreamId(
+            Hash64::hash((entity_path.hash(), view_id)).hash64(),
+        );
+
         // Follow the reference to the video asset.
-        let video_reference = video_references
+        let video_reference: EntityPath = video_references
             .and_then(|v| v.first().map(|e| e.as_str().into()))
-            .unwrap_or_else(|| entity_path.clone());
+            .unwrap_or_else(|| self.fallback_for(ctx).as_str().into());
         let video = latest_at_query_video_from_datastore(ctx.viewer_ctx, &video_reference);
 
         let world_from_entity = spatial_ctx
@@ -182,28 +189,28 @@ impl VideoFrameReferenceVisualizer {
             }
 
             Some(Ok(video)) => {
-                let timestamp_in_seconds = match video_timestamp.time_mode {
-                    VideoTimeMode::Nanoseconds => video_timestamp.video_time as f64 / 1e9,
-                };
                 video_resolution = glam::vec2(video.width() as _, video.height() as _);
-                if let Some(texture) = match video.frame_at(timestamp_in_seconds) {
-                    FrameDecodingResult::Ready(texture) => Some(texture),
-                    FrameDecodingResult::Pending(texture) => {
-                        ctx.viewer_ctx.egui_ctx.request_repaint();
-                        Some(texture)
+                if let Some(texture) =
+                    match video.frame_at(render_ctx, decode_stream_id, video_timestamp.as_seconds())
+                    {
+                        FrameDecodingResult::Ready(texture) => Some(texture),
+                        FrameDecodingResult::Pending(texture) => {
+                            ctx.viewer_ctx.egui_ctx.request_repaint();
+                            Some(texture)
+                        }
+                        FrameDecodingResult::Error(err) => {
+                            self.show_video_error(
+                                render_ctx,
+                                spatial_ctx,
+                                world_from_entity,
+                                err.to_string(),
+                                video_resolution,
+                                entity_path,
+                            );
+                            None
+                        }
                     }
-                    FrameDecodingResult::Error(err) => {
-                        self.show_video_error(
-                            render_ctx,
-                            spatial_ctx,
-                            world_from_entity,
-                            err.to_string(),
-                            video_resolution,
-                            entity_path,
-                        );
-                        None
-                    }
-                } {
+                {
                     let textured_rect = TexturedRect {
                         top_left_corner_position: world_from_entity
                             .transform_point3(glam::Vec3::ZERO),
@@ -348,7 +355,7 @@ impl VideoFrameReferenceVisualizer {
 fn latest_at_query_video_from_datastore(
     ctx: &ViewerContext<'_>,
     entity_path: &EntityPath,
-) -> Option<Arc<Result<Video, VideoError>>> {
+) -> Option<Arc<Result<Video, VideoLoadError>>> {
     let query = ctx.current_query();
 
     let results = ctx.recording().query_caches().latest_at(
@@ -362,16 +369,20 @@ fn latest_at_query_video_from_datastore(
     let blob = results.component_instance::<Blob>(0)?;
     let media_type = results.component_instance::<MediaType>(0);
 
-    let render_ctx = ctx.render_ctx?;
-
     Some(ctx.cache.entry(|c: &mut VideoCache| {
-        c.entry(
-            blob_row_id,
-            &blob,
-            media_type.as_ref().map(|m| m.as_str()),
-            render_ctx,
-        )
+        c.entry(blob_row_id, &blob, media_type.as_ref().map(|m| m.as_str()))
     }))
 }
 
-re_viewer_context::impl_component_fallback_provider!(VideoFrameReferenceVisualizer => []);
+impl TypedComponentFallbackProvider<re_types::components::EntityPath>
+    for VideoFrameReferenceVisualizer
+{
+    fn fallback_for(
+        &self,
+        ctx: &re_viewer_context::QueryContext<'_>,
+    ) -> re_types::components::EntityPath {
+        ctx.target_entity_path.to_string().into()
+    }
+}
+
+re_viewer_context::impl_component_fallback_provider!(VideoFrameReferenceVisualizer => [re_types::components::EntityPath]);

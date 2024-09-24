@@ -74,7 +74,7 @@ pub struct RenderContext {
     pub mesh_manager: RwLock<MeshManager>,
     pub texture_manager_2d: TextureManager2D,
     pub(crate) cpu_write_gpu_read_belt: Mutex<CpuWriteGpuReadBelt>,
-    pub(crate) gpu_readback_belt: Mutex<GpuReadbackBelt>,
+    pub gpu_readback_belt: Mutex<GpuReadbackBelt>,
 
     /// List of unfinished queue submission via this context.
     ///
@@ -475,6 +475,11 @@ This means, either a call to RenderContext::before_submit was omitted, or the pr
     pub(crate) fn read_lock_renderers(&self) -> RwLockReadGuard<'_, Renderers> {
         self.renderers.read()
     }
+
+    /// Returns the global frame index of the active frame.
+    pub fn active_frame_idx(&self) -> u64 {
+        self.active_frame.frame_index
+    }
 }
 
 pub struct FrameGlobalCommandEncoder(Option<wgpu::CommandEncoder>);
@@ -527,7 +532,7 @@ pub struct ActiveFrameContext {
     /// This counter is part of the `content timeline` and may be arbitrarily
     /// behind both of the `device timeline` and `queue timeline`.
     /// See <https://www.w3.org/TR/webgpu/#programming-model-timelines>
-    frame_index: u64,
+    pub frame_index: u64,
 
     /// Top level device error scope, created at startup and closed & reopened on every frame.
     ///
