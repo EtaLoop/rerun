@@ -30,7 +30,7 @@ ignored = ["profiling"] # Needed to hook up wgpu, see below at dependency setup.
 
 
 [features]
-default = ["import-obj", "import-gltf", "import-stl"]
+default = ["import-obj", "import-gltf", "import-stl", "import-dae"]
 
 ## Support for Arrow datatypes for end-to-end zero-copy.
 arrow = ["dep:arrow2"]
@@ -47,6 +47,9 @@ import-gltf = ["dep:gltf"]
 
 ## Support importing binary & ascii .stl files
 import-stl = ["dep:tinystl"]
+
+## Support importing .dae files
+import-dae = ["dep:file_parser"]
 
 ## Enable (de)serialization using serde.
 serde = ["dep:serde"]
@@ -92,6 +95,8 @@ gltf = { workspace = true, optional = true }
 tinystl = { workspace = true, features = ["bytemuck"], optional = true }
 serde = { workspace = true, features = ["derive"], optional = true }
 tobj = { workspace = true, optional = true }
+file_parser = { package = "mesh-loader", workspace = true, optional = true }
+
 
 # native
 [target.'cfg(not(target_arch = "wasm32"))'.dependencies]

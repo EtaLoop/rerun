@@ -7,6 +7,9 @@ pub mod gltf;
 #[cfg(feature = "import-stl")]
 pub mod stl;
 
+#[cfg(feature = "import-dae")]
+pub mod dae;
+
 use re_math::Vec3Ext as _;
 
 use crate::renderer::MeshInstance;

@@ -46,6 +46,11 @@ impl MediaType {
     /// <https://www.iana.org/assignments/media-types/model/stl>
     pub const STL: &'static str = "model/stl";
 
+    /// [Collada `dae`](https://en.wikipedia.org/wiki/COLLADA): `model/collada`.
+    ///
+    /// <https://www.iana.org/assignments/media-types/model/vnd.collada+xml>
+    pub const DAE: &'static str = "model/collada";
+
     // -------------------------------------------------------
     /// Videos:
 
@@ -110,6 +115,12 @@ impl MediaType {
         Self(Self::STL.into())
     }
 
+    /// `model/collada`
+    #[inline]
+    pub fn dae() -> Self {
+        Self(Self::DAE.into())
+    }
+
     // -------------------------------------------------------
     // Video:
 
@@ -145,6 +156,10 @@ impl MediaType {
             // `mime_guess2` considers `.stl` to be a `application/vnd.ms-pki.stl`.
             Some("stl") => {
                 return Some(Self::stl());
+            }
+            // `mime_guess2` considers `.stl` to be a `application/vnd.collada+xml`.
+            Some("dae") => {
+                return Some(Self::dae());
             }
             _ => {}
         }

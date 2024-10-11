@@ -91,6 +91,7 @@ class Asset3D(Asset3DExt, Archetype):
     # * `model/gltf+json`
     # * `model/obj` (.mtl material files are not supported yet, references are silently ignored)
     # * `model/stl`
+    # * `model/collada`
     #
     # If omitted, the viewer will try to guess from the data blob.
     # If it cannot guess, it won't be able to render the asset.
