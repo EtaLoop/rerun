@@ -255,7 +255,7 @@ time = { version = "0.3.36", default-features = false, features = [
 ] }
 tiny_http = { version = "0.12", default-features = false }
 tinystl = { version = "0.0.3", default-features = false }
-file_parser = {version = "0.1.12", package = 'mesh-loader' }
+file_parser = {version = "0.1.13", package = 'mesh-loader' }
 tinyvec = { version = "1.6", features = ["alloc", "rustc_1_55"] }
 tobj = "4.0"
 toml = { version = "0.8.10", default-features = false }

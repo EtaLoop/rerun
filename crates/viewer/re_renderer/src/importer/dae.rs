@@ -29,6 +29,7 @@ pub fn load_dae_from_buffer(
     let scene = file_parser::collada::from_slice(buffer);
     let mut mesh_instances = Vec::<MeshInstance>::new();
 
+    let mut i = 0;
     if let Ok(scene) = scene {
         for mesh in &scene.meshes {
             let num_vertices = mesh.vertices.len();
@@ -59,7 +60,7 @@ pub fn load_dae_from_buffer(
 
             let mut vertex_colors = Vec::new();
 
-            if !mesh.colors.is_empty() && !mesh.colors[0].is_empty() {
+            if !mesh.colors.is_empty() && !mesh.colors[i].is_empty() {
                 re_tracing::profile_scope!("copy_colors");
                 vertex_colors.extend(mesh.colors.iter().flat_map(|vec_of_colors| {
                     vec_of_colors.iter().map(|color| {
@@ -89,7 +90,7 @@ pub fn load_dae_from_buffer(
             }
 
             let albedo_factor = {
-                if let Some(diffuse) = scene.materials[0].color.diffuse {
+                if let Some(diffuse) = scene.materials[i].color.diffuse {
                     let [r, g, b, a] = diffuse;
                     crate::Rgba::from_rgba_unmultiplied(r, g, b, a)
                 } else {
@@ -104,7 +105,8 @@ pub fn load_dae_from_buffer(
                 albedo_factor,
             };
 
-            let mesh = mesh::Mesh {
+            println!("{:?}", scene.materials[i]);
+            let m = mesh::Mesh {
                 label: mesh_name.into(),
                 triangle_indices,
                 vertex_positions,
@@ -114,12 +116,13 @@ pub fn load_dae_from_buffer(
                 materials: smallvec![material],
             };
 
-            mesh.sanity_check()?;
+            m.sanity_check()?;
 
             mesh_instances.push(MeshInstance::new_with_cpu_mesh(
-                Arc::new(GpuMesh::new(ctx, &mesh)?),
-                Some(Arc::new(mesh)),
+                Arc::new(GpuMesh::new(ctx, &m)?),
+                Some(Arc::new(m)),
             ));
+            i += 1;
         }
     } else {
         return Err(DaeImportError::DaeLoading {

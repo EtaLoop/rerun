@@ -3456,9 +3456,9 @@ dependencies = [
 
 [[package]]
 name = "mesh-loader"
-version = "0.1.12"
+version = "0.1.13"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "07045d97f5cee930adbcd33097f9da84a321646ecc94e260983ecf8f535c15dc"
+checksum = "47168834301d6956a01e8e0a7772891a40918067c18d02c34d0932739426b7d2"
 dependencies = [
  "roxmltree 0.20.0",
 ]
