@@ -1646,6 +1646,15 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "96a6ac251f4a2aca6b3f91340350eab87ae57c3f127ffeb585e92bd336717991"
 
 [[package]]
+name = "custom_dae_data_loader"
+version = "0.19.0-alpha.12+dev"
+dependencies = [
+ "mesh-loader",
+ "re_build_tools",
+ "rerun",
+]
+
+[[package]]
 name = "custom_data_loader"
 version = "0.19.0"
 dependencies = [
@@ -3456,6 +3465,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "mesh-loader"
+version = "0.1.13"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "47168834301d6956a01e8e0a7772891a40918067c18d02c34d0932739426b7d2"
+dependencies = [
+ "roxmltree 0.20.0",
+]
+
+[[package]]
 name = "metal"
 version = "0.29.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -5140,7 +5158,7 @@ dependencies = [
  "rayon",
  "re_build_tools",
  "re_format",
- "roxmltree",
+ "roxmltree 0.19.0",
  "rustdoc-json",
  "rustdoc-types",
  "serde",
@@ -6624,6 +6642,12 @@ name = "roxmltree"
 version = "0.19.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "3cd14fd5e3b777a7422cca79358c57a8f6e3a703d9ac187448d0daf220c2407f"
+
+[[package]]
+name = "roxmltree"
+version = "0.20.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "6c20b6793b5c2fa6553b250154b78d6d0db37e72700ae35fad9387a46f487c97"
 
 [[package]]
 name = "run_wasm"
