@@ -1,7 +1,7 @@
 use rerun::{
     external::{anyhow, re_build_info, re_data_loader, re_log},
     log::{Chunk, RowId},
-    EntityPath, TimePoint,
+    EntityPath, Rgba32, TimePoint,
 };
 
 // use rerun::dae
@@ -56,19 +56,23 @@ fn load_collada(
     use std::collections::hash_map::DefaultHasher;
     use std::hash::Hash;
 
-    println!("----------------------------------------------");
     let mut h = DefaultHasher::new();
     contents.hash(&mut h);
 
     let scene = collada::from_slice(contents);
 
     if let Ok(scene) = scene {
-        for mesh in scene.meshes {
-            // println!("verticce : {:?} | \nnormals : {:?}", mesh.vertices, mesh.normals);
-            let mut mesh3d = rerun::Mesh3D::new(mesh.vertices);
+        for (mesh, mat) in scene.meshes.iter().zip(scene.materials.iter()) {
+            let mut mesh3d = rerun::Mesh3D::new(&mesh.vertices);
 
             if !mesh.normals.is_empty() && !mesh.normals[0].is_empty() {
-                mesh3d = mesh3d.with_vertex_normals(mesh.normals);
+                mesh3d = mesh3d.with_vertex_normals(&mesh.normals);
+            }
+
+            if let Some(diffuse) = &mat.color.diffuse {
+                mesh3d = mesh3d.with_albedo_factor(Rgba32::from_linear_unmultiplied_rgba_f32(
+                    diffuse[0], diffuse[1], diffuse[2], diffuse[3],
+                ));
             }
 
             let entity_path = EntityPath::from_file_path(filepath);
