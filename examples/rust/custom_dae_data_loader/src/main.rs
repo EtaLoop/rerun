@@ -3,7 +3,7 @@ use rerun::{
     log::{Chunk, RowId},
     EntityPath, Rgba32, TimePoint,
 };
-
+use rerun::LoadedData;
 // use rerun::dae
 
 fn main() -> anyhow::Result<std::process::ExitCode> {
@@ -25,7 +25,7 @@ impl re_data_loader::DataLoader for DaeLoader {
 
     fn load_from_path(
         &self,
-        _settings: &rerun::external::re_data_loader::DataLoaderSettings,
+        settings: &rerun::external::re_data_loader::DataLoaderSettings,
         path: std::path::PathBuf,
         tx: std::sync::mpsc::Sender<re_data_loader::LoadedData>,
     ) -> Result<(), re_data_loader::DataLoaderError> {
@@ -33,22 +33,23 @@ impl re_data_loader::DataLoader for DaeLoader {
         if path.is_dir() {
             return Err(re_data_loader::DataLoaderError::Incompatible(path)); // simply not interested
         }
-        load_collada(&tx, &path, &contents)
+        load_collada(settings, &tx, &path, &contents)
     }
 
     fn load_from_file_contents(
         &self,
-        _settings: &rerun::DataLoaderSettings,
+        settings: &rerun::DataLoaderSettings,
         filepath: std::path::PathBuf,
         contents: std::borrow::Cow<'_, [u8]>,
         tx: std::sync::mpsc::Sender<rerun::LoadedData>,
     ) -> Result<(), rerun::DataLoaderError> {
-        load_collada(&tx, &filepath, &contents)
+        load_collada(settings, &tx, &filepath, &contents)
     }
 }
 
 fn load_collada(
-    tx: &std::sync::mpsc::Sender<re_data_loader::LoadedData>,
+        settings: &rerun::DataLoaderSettings,
+        tx: &std::sync::mpsc::Sender<re_data_loader::LoadedData>,
     filepath: &std::path::Path,
     contents: &[u8],
 ) -> Result<(), re_data_loader::DataLoaderError> {
@@ -63,6 +64,7 @@ fn load_collada(
 
     if let Ok(scene) = scene {
         for (mesh, mat) in scene.meshes.iter().zip(scene.materials.iter()) {
+            // println!("verticce : {:?} | \nnormals : {:?}", mesh.vertices, mesh.normals);
             let mut mesh3d = rerun::Mesh3D::new(&mesh.vertices);
 
             if !mesh.normals.is_empty() && !mesh.normals[0].is_empty() {
@@ -80,7 +82,13 @@ fn load_collada(
                 .with_archetype(RowId::new(), TimePoint::default(), &mesh3d)
                 .build()?;
 
-            tx.send(chunk.into()).ok();
+            let store_id = settings
+                .opened_store_id
+                .clone()
+                .unwrap_or_else(|| settings.store_id.clone());
+            let data = LoadedData::Chunk(store_id, chunk);
+
+            tx.send(data).ok();
         }
     }
 
