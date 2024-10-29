@@ -74,11 +74,9 @@ fn main() -> anyhow::Result<()> {
 
     // Inform the Rerun Viewer that we do not support that kind of file.
     if !is_file || !is_collada_file {
-        println!("\n\n\n\nALLLL");
         #[allow(clippy::exit)]
         std::process::exit(EXTERNAL_DATA_LOADER_INCOMPATIBLE_EXIT_CODE);
     }
-    println!("\n\n\n\n>QSFQ>SFS>FSDF");
 
     let rec: rerun::RecordingStream = {
         let mut rec = rerun::RecordingStreamBuilder::new(
@@ -109,8 +107,6 @@ fn main() -> anyhow::Result<()> {
         }
 
         if let Some(diffuse) = &mat.color.diffuse {
-
-            println!("\n\ndiffuse : {:?}\n\n",  diffuse);
             mesh3d = mesh3d.with_albedo_factor(Rgba32::from_unmultiplied_rgba(
                 diffuse[0] as u8, diffuse[1] as u8, diffuse[2] as u8, diffuse[3] as u8,
             ));
