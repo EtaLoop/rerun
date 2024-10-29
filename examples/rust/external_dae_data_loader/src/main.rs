@@ -82,7 +82,7 @@ fn main() -> anyhow::Result<()> {
         let mut rec = rerun::RecordingStreamBuilder::new(
             args.application_id
                 .as_deref()
-                .unwrap_or("rerun_collada_external_data_loader"),
+                .unwrap_or("hello_world"),
         );
         if let Some(recording_id) = args.recording_id.as_ref() {
             rec = rec.recording_id(recording_id);
@@ -112,7 +112,8 @@ fn main() -> anyhow::Result<()> {
             ));
         }
 
-        rec.log(entity_path_prefix.join(&rerun::EntityPath::from_file_path(&args.filepath)), &mesh3d)?;
+        // rec.log(entity_path_prefix.join(&rerun::EntityPath::from_file_path(&args.filepath)), &mesh3d)?;
+        rec.log("cube", &mesh3d)?;
     }
 
     Ok::<_, anyhow::Error>(())
