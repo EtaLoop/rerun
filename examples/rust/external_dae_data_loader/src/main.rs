@@ -2,6 +2,8 @@
 
 use rerun::{self, Rgba32, EXTERNAL_DATA_LOADER_INCOMPATIBLE_EXIT_CODE};
 
+use rerun::external::re_log;
+
 // The Rerun Viewer will always pass at least these two pieces of information:
 // 1. The path to be loaded, as a positional arg.
 // 2. A shared recording ID, via the `--recording-id` flag.
@@ -43,19 +45,19 @@ struct Args {
 
     /// deprecated: alias for `--static`
     #[argh(switch)]
-    timeless: bool,
+    _timeless: bool,
 
     /// optionally mark data to be logged statically
     #[argh(arg_name = "static", switch)]
-    statically: bool,
+    _statically: bool,
 
     /// optional timestamps to log at (e.g. `--time sim_time=1709203426`) (repeatable)
     #[argh(option)]
-    time: Vec<String>,
+    _time: Vec<String>,
 
     /// optional sequences to log at (e.g. `--sequence sim_frame=42`) (repeatable)
     #[argh(option)]
-    sequence: Vec<String>,
+    _sequence: Vec<String>,
 }
 
 fn extension(path: &std::path::Path) -> String {
@@ -82,8 +84,9 @@ fn main() -> anyhow::Result<()> {
         let mut rec = rerun::RecordingStreamBuilder::new(
             args.application_id
                 .as_deref()
-                .unwrap_or("hello_world"),
+                .unwrap_or("external_data_loader"),
         );
+
         if let Some(recording_id) = args.recording_id.as_ref() {
             rec = rec.recording_id(recording_id);
         };
@@ -108,7 +111,10 @@ fn main() -> anyhow::Result<()> {
 
         if let Some(diffuse) = &mat.color.diffuse {
             mesh3d = mesh3d.with_albedo_factor(Rgba32::from_unmultiplied_rgba(
-                diffuse[0] as u8, diffuse[1] as u8, diffuse[2] as u8, diffuse[3] as u8,
+                diffuse[0] as u8,
+                diffuse[1] as u8,
+                diffuse[2] as u8,
+                diffuse[3] as u8,
             ));
         }
 
