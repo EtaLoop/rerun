@@ -2,8 +2,6 @@
 
 use rerun::{self, Rgba32, EXTERNAL_DATA_LOADER_INCOMPATIBLE_EXIT_CODE};
 
-use rerun::external::re_log;
-
 // The Rerun Viewer will always pass at least these two pieces of information:
 // 1. The path to be loaded, as a positional arg.
 // 2. A shared recording ID, via the `--recording-id` flag.
@@ -118,8 +116,20 @@ fn main() -> anyhow::Result<()> {
             ));
         }
 
-        // rec.log(entity_path_prefix.join(&rerun::EntityPath::from_file_path(&args.filepath)), &mesh3d)?;
-        rec.log("cube", &mesh3d)?;
+        let filename = args.filepath.file_stem().and_then(|f| f.to_str());
+        if let Some(filename) = filename {
+            let path = std::path::Path::new(&filename);
+
+            rec.log(
+                rerun::EntityPath::from_single_string(path.to_string_lossy().to_string()),
+                &mesh3d,
+            )?;
+        } else {
+            rec.log(
+                entity_path_prefix.join(&rerun::EntityPath::from_file_path(&args.filepath)),
+                &mesh3d,
+            )?;
+        }
     }
 
     Ok::<_, anyhow::Error>(())
