@@ -66,6 +66,51 @@ fn extension(path: &std::path::Path) -> String {
         .to_string()
 }
 
+fn load_mesh(rec: &rerun::RecordingStream, args: &Args) -> anyhow::Result<()> {
+    let loader = mesh_loader::Loader::default();
+    let scene = loader.load_collada(&args.filepath)?;
+
+    let entity_path_prefix = args.entity_path_prefix.as_ref().map_or_else(
+        || rerun::EntityPath::new(vec![]),
+        |prefix| rerun::EntityPath::from(prefix.clone()),
+    );
+
+    for (mesh, mat) in scene.meshes.iter().zip(scene.materials.iter()) {
+        let mut mesh3d = rerun::Mesh3D::new(&mesh.vertices);
+
+        if !mesh.normals.is_empty() && !mesh.normals[0].is_empty() {
+            mesh3d = mesh3d.with_vertex_normals(&mesh.normals);
+        }
+
+        if let Some(diffuse) = &mat.color.diffuse {
+            mesh3d = mesh3d.with_albedo_factor(Rgba32::from_unmultiplied_rgba(
+                diffuse[0] as u8,
+                diffuse[1] as u8,
+                diffuse[2] as u8,
+                diffuse[3] as u8,
+            ));
+        }
+
+        let filename = args.filepath.file_stem().and_then(|f| f.to_str());
+
+        if let Some(filename) = filename {
+            let path = std::path::Path::new(&filename);
+
+            rec.log(
+                rerun::EntityPath::from_single_string(path.to_string_lossy().to_string()),
+                &mesh3d,
+            )?;
+        } else {
+            rec.log(
+                entity_path_prefix.join(&rerun::EntityPath::from_file_path(&args.filepath)),
+                &mesh3d,
+            )?;
+        }
+    }
+
+    Ok::<_, anyhow::Error>(())
+}
+
 fn main() -> anyhow::Result<()> {
     let args: Args = argh::from_env();
 
@@ -93,44 +138,7 @@ fn main() -> anyhow::Result<()> {
         rec.stdout()?
     };
 
-    let loader = mesh_loader::Loader::default();
-    let scene = loader.load_collada(&args.filepath)?;
-
-    let entity_path_prefix = args
-        .entity_path_prefix
-        .map_or_else(|| rerun::EntityPath::new(vec![]), rerun::EntityPath::from);
-
-    for (mesh, mat) in scene.meshes.iter().zip(scene.materials.iter()) {
-        let mut mesh3d = rerun::Mesh3D::new(&mesh.vertices);
-
-        if !mesh.normals.is_empty() && !mesh.normals[0].is_empty() {
-            mesh3d = mesh3d.with_vertex_normals(&mesh.normals);
-        }
-
-        if let Some(diffuse) = &mat.color.diffuse {
-            mesh3d = mesh3d.with_albedo_factor(Rgba32::from_unmultiplied_rgba(
-                diffuse[0] as u8,
-                diffuse[1] as u8,
-                diffuse[2] as u8,
-                diffuse[3] as u8,
-            ));
-        }
-
-        let filename = args.filepath.file_stem().and_then(|f| f.to_str());
-        if let Some(filename) = filename {
-            let path = std::path::Path::new(&filename);
-
-            rec.log(
-                rerun::EntityPath::from_single_string(path.to_string_lossy().to_string()),
-                &mesh3d,
-            )?;
-        } else {
-            rec.log(
-                entity_path_prefix.join(&rerun::EntityPath::from_file_path(&args.filepath)),
-                &mesh3d,
-            )?;
-        }
-    }
+    load_mesh(&rec, &args)?;
 
     Ok::<_, anyhow::Error>(())
 }
