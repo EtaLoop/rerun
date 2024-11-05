@@ -1,5 +1,3 @@
-//! Example of an external data-loader executable plugin for the Rerun Viewer.
-
 use rerun::{self, Rgba32, EXTERNAL_DATA_LOADER_INCOMPATIBLE_EXIT_CODE};
 
 // The Rerun Viewer will always pass at least these two pieces of information:
