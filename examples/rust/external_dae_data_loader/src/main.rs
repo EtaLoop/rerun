@@ -1,27 +1,11 @@
 use rerun::{self, Rgba32, EXTERNAL_DATA_LOADER_INCOMPATIBLE_EXIT_CODE};
 
-// The Rerun Viewer will always pass at least these two pieces of information:
-// 1. The path to be loaded, as a positional arg.
-// 2. A shared recording ID, via the `--recording-id` flag.
-//
-// It is up to you whether you make use of that shared recording ID or not.
-// If you use it, the data will end up in the same recording as all other plugins interested in
-// that file, otherwise you can just create a dedicated recording for it. Or both.
-//
-// Check out `re_data_source::DataLoaderSettings` documentation for an exhaustive listing of
-// the available CLI parameters.
-
-/// This is an example executable data-loader plugin for the Rerun Viewer.
+/// This is an executable data-loader plugin for the Rerun Viewer.
 /// Any executable on your `$PATH` with a name that starts with [`rerun-loader-`] will be
 /// treated as an external data-loader.
 ///
-/// This particular one will log Rust source code files as markdown documents, and return a
-/// special exit code to indicate that it doesn't support anything else.
-///
-/// To try it out, install it in your $PATH (`cargo install --path . -f`), then open a
-/// Rust source file with Rerun (`rerun file.rs`).
-///
-/// [`rerun-loader-`]: `rerun::EXTERNAL_DATA_LOADER_PREFIX`
+/// This particular one will log collada files as [`Mesh3d`](https://docs.rs/rerun/latest/rerun/struct.Mesh3D.html),
+/// and return a special exit code to indicate that it doesn't support anything else.
 #[derive(argh::FromArgs, Debug)]
 struct Args {
     #[argh(positional)]
