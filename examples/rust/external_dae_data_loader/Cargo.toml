@@ -11,7 +11,7 @@ version.workspace = true
 
 [dependencies]
 mesh-loader = "0.1.13"
-rerun = { path = "../../../crates/top/rerun" }
+rerun = "0.19.0"
 
 anyhow = "1.0"
 argh = "0.1"
